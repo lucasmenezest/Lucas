@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Card 6 – Python ultrapassa JavaScript</title>
+<!--
+  Animação do Card 6: Python subindo e ultrapassando o JavaScript (referência: reel Anthropic x OpenAI).
+  Modos (via querystring):
+    ?mode=box   -> só a ilustração (844x431, substitui a foto do Octocat)
+    ?mode=card  -> card inteiro 1080x1350 (preview em contexto)
+  Sem ?t= a animação roda em loop no navegador. Com window.render(t) o export renderiza quadro a quadro.
+-->
+<style>
+  @font-face { font-family: Outfit; font-weight: 400; src: url(fonts/outfit-latin-400-normal.woff2) format("woff2"); }
+  @font-face { font-family: Outfit; font-weight: 700; src: url(fonts/outfit-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: Outfit; font-weight: 800; src: url(fonts/outfit-latin-800-normal.woff2) format("woff2"); }
+  @font-face { font-family: JBM; font-weight: 700; src: url(fonts/jetbrains-mono-latin-700-normal.woff2) format("woff2"); }
+
+  :root {
+    --green: #2ee37f;
+    --box-bg: #1d2230;
+    --py: #3776ab;
+    --js: #f0db4f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #0a0d0b; }
+
+  /* ---------- Ilustração (caixa) ---------- */
+  .box {
+    position: relative; width: 844px; height: 431px; overflow: hidden;
+    background:
+      radial-gradient(120% 90% at 50% 120%, rgba(46,227,127,.10), transparent 60%),
+      var(--box-bg);
+  }
+  .grid { position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 100% 62px; background-position: 0 30px; }
+
+  .year { position: absolute; left: 28px; top: 22px; font: 700 30px/1 JBM, monospace; color: var(--green); letter-spacing: -.5px; }
+  .year .pfx { opacity: .55; margin-right: 8px; }
+
+  .col { position: absolute; top: 0; width: 116px; }
+  .tile { position: absolute; left: 0; width: 116px; height: 116px; border-radius: 6px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  .tile img { display: block; width: 100%; height: 100%; }
+  .tile.py { background: #fff; padding: 14px; }
+  .pole { position: absolute; left: 55.5px; width: 5px; height: 600px; border-radius: 2px; }
+  .pole.py { background: var(--py); }
+  .pole.js { background: var(--js); }
+
+  .glow { position: absolute; left: -14px; width: 144px; height: 144px; border-radius: 14px;
+    box-shadow: 0 0 0 3px var(--green), 0 0 40px 6px rgba(46,227,127,.55); }
+  .badge { position: absolute; left: 92px; width: 54px; height: 54px; border-radius: 50%;
+    background: var(--green); color: #07130c; font: 800 24px/54px Outfit, sans-serif; text-align: center; }
+
+  .pill { position: absolute; right: 136px; transform-origin: right center; white-space: nowrap;
+    padding: 6px 13px; border-radius: 999px; background: rgba(55,118,171,.18); border: 1.5px solid rgba(90,159,212,.65);
+    color: #e9f1f8; font: 700 17px/1 Outfit, sans-serif; }
+  .pill::after { content: ""; position: absolute; right: -77px; top: 50%; width: 76px; height: 1.5px; background: rgba(90,159,212,.65); }
+
+  /* ---------- Card inteiro ---------- */
+  .card { position: relative; width: 1080px; height: 1350px; overflow: hidden;
+    background:
+      radial-gradient(70% 45% at 50% 62%, rgba(46,227,127,.22), transparent 70%),
+      radial-gradient(90% 60% at 50% 100%, rgba(46,227,127,.10), transparent 70%),
+      #0b0f0d; }
+  .card .copy { position: absolute; left: 118px; top: 280px; width: 844px; color: #f2f5f3; font: 400 41px/1.18 Outfit, sans-serif; letter-spacing: -.4px; }
+  .card .copy b { color: var(--green); font-weight: 700; }
+  .card .copy p + p { margin-top: 40px; }
+  .card .slot { position: absolute; left: 118px; top: 662px; border-radius: 22px; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.04), 0 30px 80px rgba(0,0,0,.5); }
+  .card .foot { position: absolute; left: 118px; top: 1236px; color: #f2f5f3; font: 700 22px/1 Outfit, sans-serif; }
+</style>
+</head>
+<body>
+<template id="box-tpl">
+  <div class="box">
+    <div class="grid"></div>
+    <div class="year"><span class="pfx">&gt;/</span><span id="yr">2014</span></div>
+
+    <div class="col" id="pycol" style="left:272px">
+      <div class="pill" id="p0">NumPy</div>
+      <div class="pill" id="p1">scikit-learn</div>
+      <div class="pill" id="p2">TensorFlow</div>
+      <div class="pill" id="p3">PyTorch</div>
+      <div class="pole py" id="pypole"></div>
+      <div class="glow" id="glow"></div>
+      <div class="tile py" id="pytile"><img src="logos/python.svg" alt="Python"></div>
+      <div class="badge" id="badge">#1</div>
+    </div>
+
+    <div class="col" id="jscol" style="left:532px">
+      <div class="pole js" id="jspole"></div>
+      <div class="tile js" id="jstile"><img src="logos/javascript.svg" alt="JavaScript"></div>
+    </div>
+  </div>
+</template>
+
+<div id="root"></div>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const mode = params.get('mode') || 'card';
+  const root = document.getElementById('root');
+  const box = document.getElementById('box-tpl').content.cloneNode(true);
+
+  if (mode === 'card') {
+    root.innerHTML = `
+      <div class="card">
+        <div class="copy">
+          <p><b>NumPy, scikit-learn, TensorFlow e PyTorch</b> foram crescendo um em cima do outro, até que em 2024 <b>Python passou o JavaScript</b> como a linguagem mais usada do GitHub.</p>
+          <p><b>E por que o JavaScript não conseguiu acompanhar esse crescimento?</b></p>
+        </div>
+        <div class="slot"></div>
+        <div class="foot">&gt;/Arrasta pro lado</div>
+      </div>`;
+    root.querySelector('.slot').appendChild(box);
+  } else {
+    root.appendChild(box);
+  }
+
+  const $ = id => document.getElementById(id);
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const easeOut = k => 1 - Math.pow(1 - k, 3);
+  const easeOutBack = k => { const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); };
+
+  // Linha do tempo (segundos)
+  const DURATION = 6.0;
+  const A0 = 0.4, A1 = 3.8;   // fase A: anos 2014 -> 2024, Python acelera (ease-in) até cruzar o JS
+  const B1 = 4.6;             // fase B: Python termina de subir e assume a ponta
+  const PY = { start: 340, endA: 92, endB: 30 };   // posição (top) do quadrado do Python
+  const JS = { start: 118, endA: 102, endB: 96 };  // JS cresce, mas devagar
+  const PILL_AT = [290, 230, 170, 120];            // altura em que cada framework "fica" no mastro
+
+  function render(t) {
+    const p = clamp((t - A0) / (A1 - A0));
+    const q = easeOut(clamp((t - A1) / (B1 - A1)));
+
+    const pyTop = t < A1 ? lerp(PY.start, PY.endA, p * p) : lerp(PY.endA, PY.endB, q);
+    const jsTop = t < A1 ? lerp(JS.start, JS.endA, p) : lerp(JS.endA, JS.endB, q);
+
+    $('pytile').style.top = pyTop + 'px';
+    $('pypole').style.top = (pyTop + 100) + 'px';
+    $('jstile').style.top = jsTop + 'px';
+    $('jspole').style.top = (jsTop + 100) + 'px';
+
+    $('yr').textContent = Math.round(lerp(2014, 2024, p));
+
+    // Frameworks surgem no mastro conforme o Python passa por cada altura
+    PILL_AT.forEach((y, i) => {
+      const el = $('p' + i);
+      // tempo em que pyTop cruzou y (inverte a curva p^2 da fase A)
+      const pc = Math.sqrt((PY.start - y) / (PY.start - PY.endA));
+      const tc = A0 + pc * (A1 - A0);
+      const k = clamp((t - tc) / 0.28);
+      el.style.top = (y + 58 - 15) + 'px';
+      el.style.opacity = clamp(k * 1.6);
+      el.style.transform = `scale(${lerp(0.5, 1, easeOutBack(k))})`;
+    });
+
+    // Destaque de liderança depois da ultrapassagem
+    const g = clamp((t - (A1 + 0.15)) / 0.4);
+    $('glow').style.top = (pyTop - 14) + 'px';
+    $('glow').style.opacity = g;
+    const b = clamp((t - (A1 + 0.35)) / 0.35);
+    $('badge').style.top = (pyTop - 18) + 'px';
+    $('badge').style.opacity = clamp(b * 2);
+    $('badge').style.transform = `scale(${b === 0 ? 0 : easeOutBack(b)})`;
+  }
+  window.render = render;
+  window.DURATION = DURATION;
+
+  if (params.has('t')) {
+    render(parseFloat(params.get('t')));
+  } else if (!params.has('export')) {
+    const t0 = performance.now();
+    (function loop(now) { render(((now - t0) / 1000) % DURATION); requestAnimationFrame(loop); })(t0);
+  } else {
+    render(0);
+  }
+</script>
+</body>
+</html>
